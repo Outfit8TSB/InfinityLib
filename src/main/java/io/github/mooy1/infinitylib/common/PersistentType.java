@@ -9,8 +9,6 @@ import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import lombok.RequiredArgsConstructor;
-
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -28,18 +26,17 @@ import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
  *
  * @author Mooy1
  */
-@RequiredArgsConstructor
 @ParametersAreNonnullByDefault
 public final class PersistentType<T, Z> implements PersistentDataType<T, Z> {
 
-    public static final PersistentDataType<byte[], ItemStack> ITEM_STACK = new PersistentType<>(
+    public static final PersistentDataType<byte[], ItemStack> ITEM_STACK =
+        new PersistentType<byte[], ItemStack>(
             byte[].class, ItemStack.class,
             itemStack -> {
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                 try (BukkitObjectOutputStream output = new BukkitObjectOutputStream(bytes)) {
                     output.writeObject(itemStack);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 return bytes.toByteArray();
@@ -48,16 +45,16 @@ public final class PersistentType<T, Z> implements PersistentDataType<T, Z> {
                 ByteArrayInputStream bytes = new ByteArrayInputStream(arr);
                 try (BukkitObjectInputStream input = new BukkitObjectInputStream(bytes)) {
                     return (ItemStack) input.readObject();
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     return CustomItemStack.create(Material.STONE, "&cERROR");
                 }
             }
-    );
+        );
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static final PersistentDataType<byte[], List<ItemStack>> ITEM_STACK_LIST = new PersistentType<byte[], List<ItemStack>>(
+    public static final PersistentDataType<byte[], List<ItemStack>> ITEM_STACK_LIST =
+        new PersistentType<byte[], List<ItemStack>>(
             byte[].class, (Class) List.class,
             list -> {
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -65,8 +62,7 @@ public final class PersistentType<T, Z> implements PersistentDataType<T, Z> {
                     for (ItemStack item : list) {
                         output.writeObject(item);
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 return bytes.toByteArray();
@@ -78,22 +74,21 @@ public final class PersistentType<T, Z> implements PersistentDataType<T, Z> {
                     while (bytes.available() > 0) {
                         list.add((ItemStack) input.readObject());
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 return list;
             }
-    );
+        );
 
-    public static final PersistentDataType<byte[], Location> LOCATION = new PersistentType<>(
+    public static final PersistentDataType<byte[], Location> LOCATION =
+        new PersistentType<byte[], Location>(
             byte[].class, Location.class,
             location -> {
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                 try (BukkitObjectOutputStream output = new BukkitObjectOutputStream(bytes)) {
                     output.writeObject(location);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 return bytes.toByteArray();
@@ -102,16 +97,16 @@ public final class PersistentType<T, Z> implements PersistentDataType<T, Z> {
                 ByteArrayInputStream bytes = new ByteArrayInputStream(arr);
                 try (BukkitObjectInputStream input = new BukkitObjectInputStream(bytes)) {
                     return (Location) input.readObject();
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     return new Location(null, 0, 0, 0);
                 }
             }
-    );
+        );
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static final PersistentDataType<byte[], List<String>> STRING_LIST = new PersistentType<byte[], List<String>>(
+    public static final PersistentDataType<byte[], List<String>> STRING_LIST =
+        new PersistentType<byte[], List<String>>(
             byte[].class, (Class) List.class,
             list -> {
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream(list.size() * 20);
@@ -131,19 +126,19 @@ public final class PersistentType<T, Z> implements PersistentDataType<T, Z> {
                         bytes.read(string, 0, string.length);
                         list.add(new String(string));
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 return list;
             }
-    );
+        );
 
     /**
      * Only use this if you were using it prior to the slimefun breaking changes
      */
     @Deprecated
-    public static final PersistentDataType<String, ItemStack> ITEM_STACK_OLD = new PersistentType<>(
+    public static final PersistentDataType<String, ItemStack> ITEM_STACK_OLD =
+        new PersistentType<String, ItemStack>(
             String.class, ItemStack.class,
             itemStack -> {
                 YamlConfiguration config = new YamlConfiguration();
@@ -154,20 +149,30 @@ public final class PersistentType<T, Z> implements PersistentDataType<T, Z> {
                 YamlConfiguration config = new YamlConfiguration();
                 try {
                     config.loadFromString(string);
-                }
-                catch (InvalidConfigurationException e) {
+                } catch (InvalidConfigurationException e) {
                     e.printStackTrace();
                     return CustomItemStack.create(Material.STONE, "&cERROR");
                 }
                 ItemStack item = config.getItemStack("item");
                 return item != null ? item : CustomItemStack.create(Material.STONE, "&cERROR");
             }
-    );
+        );
 
     private final Class<T> primitive;
     private final Class<Z> complex;
     private final Function<Z, T> toPrimitive;
     private final Function<T, Z> toComplex;
+
+    // Explicit constructor (no Lombok needed)
+    public PersistentType(Class<T> primitive,
+                          Class<Z> complex,
+                          Function<Z, T> toPrimitive,
+                          Function<T, Z> toComplex) {
+        this.primitive = primitive;
+        this.complex = complex;
+        this.toPrimitive = toPrimitive;
+        this.toComplex = toComplex;
+    }
 
     @Nonnull
     @Override
@@ -192,5 +197,4 @@ public final class PersistentType<T, Z> implements PersistentDataType<T, Z> {
     public Z fromPrimitive(T primitive, PersistentDataAdapterContext context) {
         return toComplex.apply(primitive);
     }
-
 }
